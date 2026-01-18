@@ -2,78 +2,77 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Study Advisor</title>
+  <title>Study Quest</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
+  <header>
+    <h1>STUDY QUEST</h1>
+    <div class="top-buttons">
+      <button id="addTaskBtn">＋ タスク追加</button>
+      <button id="statsBtn">📊 統計</button>
+    </div>
+  </header>
 
-<header class="topbar">
-  <div class="logo">STUDY<br><span>ADVISOR</span></div>
-  <div class="top-actions">
-    <button class="pill purple">⭐ プレミアム</button>
-    <button class="pill blue">ログイン</button>
-  </div>
-</header>
+  <section class="filters">
+    <div>
+      <span>難易度</span>
+      <div id="difficultyFilters" class="filter-group"></div>
+      <button id="addDifficultyBtn">＋</button>
+    </div>
+    <div>
+      <span>問題形式</span>
+      <div id="typeFilters" class="filter-group"></div>
+      <button id="addTypeBtn">＋</button>
+    </div>
+  </section>
 
-<nav class="tabs">
-  <button class="tab">ダッシュボード</button>
-  <button class="tab active">タスク</button>
-  <button class="tab">統計</button>
-  <button class="tab">設定</button>
-</nav>
+  <main id="app"></main>
 
-<section class="filters">
-  <div class="filter-row">
-    <label>🔁 復習</label>
-    <input type="checkbox" id="filter-review" />
-    <label>🎯 難易度</label>
-    <select id="filter-difficulty">
-      <option value="all">Any</option>
-      <option value="easy">Easy</option>
-      <option value="normal">Normal</option>
-      <option value="hard">Hard</option>
-    </select>
-  </div>
+  <!-- モーダル -->
+  <div id="taskModal" class="modal hidden">
+    <div class="modal-content">
+      <h2 id="modalTitle"></h2>
 
-  <div class="add-row">
-    <input id="newTraderName" placeholder="＋ 教科を追加（例：数学）" />
-    <button onclick="addTrader()">追加</button>
-  </div>
-</section>
+      <div class="modal-row">
+        <label>教科</label>
+        <select id="modalSubject"></select>
+      </div>
 
-<main id="traderList"></main>
+      <div class="modal-row">
+        <label>難易度</label>
+        <select id="modalDifficulty"></select>
+      </div>
 
-<!-- タスク追加モーダル -->
-<div id="addTaskModal" class="modal hidden">
-  <div class="modal-content">
-    <h2 id="addTaskTitle"></h2>
-    <input id="newTaskName" placeholder="タスク名（例：二次関数 基本10問）" />
-    <select id="newTaskDifficulty">
-      <option value="easy">Easy</option>
-      <option value="normal">Normal</option>
-      <option value="hard">Hard</option>
-    </select>
-    <div class="modal-actions">
-      <button onclick="confirmAddTask()">追加</button>
-      <button onclick="closeAddTask()">キャンセル</button>
+      <div class="modal-row">
+        <label>問題形式</label>
+        <select id="modalType"></select>
+      </div>
+
+      <div class="modal-row">
+        <label>備考</label>
+        <textarea id="modalMemo" rows="6"></textarea>
+      </div>
+
+      <div class="modal-actions">
+        <button id="saveTaskBtn">保存</button>
+        <button id="closeModalBtn">閉じる</button>
+      </div>
     </div>
   </div>
-</div>
 
-<!-- メモモーダル -->
-<div id="taskModal" class="modal hidden">
-  <div class="modal-content">
-    <h2 id="modalTitle"></h2>
-    <textarea id="taskNotes" placeholder="感想・注意点・反省などを書く..."></textarea>
-    <div class="modal-actions">
-      <button onclick="saveNotes()">保存</button>
-      <button onclick="closeModal()">閉じる</button>
+  <!-- 統計画面 -->
+  <div id="statsPage" class="modal hidden">
+    <div class="modal-content stats">
+      <h2>📊 教科別進捗</h2>
+      <div id="statsContent"></div>
+      <button id="closeStatsBtn">閉じる</button>
     </div>
   </div>
-</div>
 
-<script src="app.js"></script>
+  <script src="app.js"></script>
 </body>
 </html>
+
 
