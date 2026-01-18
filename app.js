@@ -1,112 +1,160 @@
-let data = JSON.parse(localStorage.getItem("studyData")) || [
-  { name: "数学", tasks: [] },
-  { name: "英語", tasks: [] }
+const DEFAULT_SUBJECTS = [
+  "数学Ⅰ","数学A","数学Ⅱ","数学B","数学C","数学Ⅲ",
+  "物理基礎","物理","化学基礎","化学","地理","英語","古文","漢文","現代文・小説"
 ];
 
-let currentTask = null;
-let currentTraderIndex = null;
+const DEFAULT_DIFFICULTIES = ["Normal", "Hard", "Very Hard"];
+const DEFAULT_TYPES = ["練習問題", "リードC", "リードD", "教科書内容"];
 
-const traderList = document.getElementById("traderList");
-const modal = document.getElementById("taskModal");
-const modalTitle = document.getElementById("modalTitle");
-const taskNotes = document.getElementById("taskNotes");
+let state = JSON.parse(localStorage.getItem("studyQuestV2")) || {
+  subjects: DEFAULT_SUBJECTS,
+  difficulties: DEFAULT_DIFFICULTIES,
+  types: DEFAULT_TYPES,
+  tasks: []
+};
 
-const addTaskModal = document.getElementById("addTaskModal");
-const addTaskTitle = document.getElementById("addTaskTitle");
-const newTaskName = document.getElementById("newTaskName");
-const newTaskDifficulty = document.getElementById("newTaskDifficulty");
+let activeDifficultyFilters = new Set();
+let activeTypeFilters = new Set();
 
 function save() {
-  localStorage.setItem("studyData", JSON.stringify(data));
+  localStorage.setItem("studyQuestV2", JSON.stringify(state));
+}
+
+function generateId() {
+  return Date.now() + Math.random().toString(36).slice(2);
+}
+
+/* ---------- UI構築 ---------- */
+
+function renderFilters() {
+  const diffWrap = document.getElementById("difficultyFilters");
+  const typeWrap = document.getElementById("typeFilters");
+
+  diffWrap.innerHTML = "";
+  typeWrap.innerHTML = "";
+
+  state.difficulties.forEach(d => {
+    const el = document.createElement("div");
+    el.className = "filter";
+    if (activeDifficultyFilters.has(d)) el.classList.add("active");
+    el.textContent = d;
+    el.onclick = () => {
+      activeDifficultyFilters.has(d) ? activeDifficultyFilters.delete(d) : activeDifficultyFilters.add(d);
+      render();
+    };
+    diffWrap.appendChild(el);
+  });
+
+  state.types.forEach(t => {
+    const el = document.createElement("div");
+    el.className = "filter";
+    if (activeTypeFilters.has(t)) el.classList.add("active");
+    el.textContent = t;
+    el.onclick = () => {
+      activeTypeFilters.has(t) ? activeTypeFilters.delete(t) : activeTypeFilters.add(t);
+      render();
+    };
+    typeWrap.appendChild(el);
+  });
 }
 
 function render() {
-  traderList.innerHTML = "";
+  renderFilters();
+  const app = document.getElementById("app");
+  app.innerHTML = "";
 
-  const showReview = document.getElementById("filter-review").checked;
-  const difficultyFilter = document.getElementById("filter-difficulty").value;
+  state.subjects.forEach(subject => {
+    const subjectTasks = state.tasks.filter(t => t.subject === subject);
 
-  data.forEach((trader, traderIndex) => {
-    const doneCount = trader.tasks.filter(t => t.done).length;
-
-    const traderDiv = document.createElement("div");
-    traderDiv.className = "trader";
+    const section = document.createElement("div");
+    section.className = "section";
 
     const header = document.createElement("div");
-    header.className = "trader-header";
+    header.className = "section-header";
     header.innerHTML = `
-      <div class="trader-name">▶ ${trader.name}</div>
-      <div class="trader-progress">${doneCount} / ${trader.tasks.length}</div>
+      ▶ ${subject}
+      <span>${subjectTasks.filter(t => t.done).length}/${subjectTasks.length}</span>
     `;
-    header.onclick = () => {
-      const list = traderDiv.querySelector(".task-list");
-      list.style.display = list.style.display === "block" ? "none" : "block";
-    };
+    section.appendChild(header);
 
     const list = document.createElement("div");
     list.className = "task-list";
 
-    trader.tasks.forEach((task, taskIndex) => {
-      if (showReview && !task.review) return;
-      if (difficultyFilter !== "all" && task.difficulty !== difficultyFilter) return;
+    subjectTasks
+      .filter(task => {
+        if (activeDifficultyFilters.size && !activeDifficultyFilters.has(task.difficulty)) return false;
+        if (activeTypeFilters.size && !activeTypeFilters.has(task.type)) return false;
+        return true;
+      })
+      .forEach(task => {
+        const row = document.createElement("div");
+        row.className = "task-row";
+        if (task.done) row.classList.add("done");
+        if (task.retry) row.classList.add("retry");
 
-      const taskDiv = document.createElement("div");
-      taskDiv.className = "task";
+        row.innerHTML = `
+          <div class="checkbox ${task.done ? "checked" : ""}">✓</div>
+          <span class="title">${task.title}</span>
+          <div class="badges">
+            <span class="badge">${task.difficulty}</span>
+            <span class="badge">${task.type}</span>
+          </div>
+          <button class="retry-btn">↻</button>
+        `;
 
-      const left = document.createElement("div");
-      left.className = "task-left";
+        row.querySelector(".checkbox").onclick = e => {
+          e.stopPropagation();
+          task.done = !task.done;
+          save();
+          render();
+        };
 
-      const checkbox = document.createElement("div");
-      checkbox.className = "checkbox" + (task.done ? " checked" : "");
-      checkbox.textContent = task.done ? "✓" : "";
-      checkbox.onclick = () => toggleDone(traderIndex, taskIndex);
+        row.querySelector(".retry-btn").onclick = e => {
+          e.stopPropagation();
+          task.retry = !task.retry;
+          save();
+          render();
+        };
 
-      const name = document.createElement("span");
-      name.className = "task-name" + (task.done ? " done" : "");
-      name.textContent = task.name;
-      name.onclick = () => openModal(traderIndex, taskIndex);
+        row.onclick = () => openTaskModal(task);
 
-      left.appendChild(checkbox);
-      left.appendChild(name);
+        list.appendChild(row);
+      });
 
-      const reviewBtn = document.createElement("button");
-      reviewBtn.className = "review-btn" + (task.review ? " active" : "");
-      reviewBtn.textContent = "🔁";
-      reviewBtn.onclick = () => toggleReview(traderIndex, taskIndex);
-
-      taskDiv.appendChild(left);
-      taskDiv.appendChild(reviewBtn);
-      list.appendChild(taskDiv);
-    });
-
-    const addTaskBtn = document.createElement("button");
-    addTaskBtn.className = "add-task-btn";
-    addTaskBtn.textContent = "+ タスクを追加";
-    addTaskBtn.onclick = () => openAddTaskModal(traderIndex);
-    list.appendChild(addTaskBtn);
-
-    traderDiv.appendChild(header);
-    traderDiv.appendChild(list);
-    traderList.appendChild(traderDiv);
+    section.appendChild(list);
+    app.appendChild(section);
   });
-
-  save();
 }
 
-function toggleDone(ti, ki) {
-  data[ti].tasks[ki].done = !data[ti].tasks[ki].done;
-  render();
-}
+/* ---------- モーダル ---------- */
 
-function toggleReview(ti, ki) {
-  data[ti].tasks[ki].review = !data[ti].tasks[ki].review;
-  render();
-}
+const modal = document.getElementById("taskModal");
+const modalTitle = document.getElementById("modalTitle");
+const modalSubject = document.getElementById("modalSubject");
+const modalDifficulty = document.getElementById("modalDifficulty");
+const modalType = document.getElementById("modalType");
+const modalMemo = document.getElementById("modalMemo");
 
-function openModal(ti, ki) {
-  currentTask = { ti, ki };
-  modalTitle.textContent = data[ti].tasks[ki].name;
-  taskNotes.value = data[ti].tasks[ki].notes || "";
+let currentTask = null;
+
+function openTaskModal(task = null) {
+  currentTask = task;
+
+  modalTitle.textContent = task ? "タスク編集" : "新規タスク追加";
+
+  modalSubject.innerHTML = state.subjects.map(s => `<option>${s}</option>`).join("");
+  modalDifficulty.innerHTML = state.difficulties.map(d => `<option>${d}</option>`).join("");
+  modalType.innerHTML = state.types.map(t => `<option>${t}</option>`).join("");
+
+  if (task) {
+    modalSubject.value = task.subject;
+    modalDifficulty.value = task.difficulty;
+    modalType.value = task.type;
+    modalMemo.value = task.memo || "";
+  } else {
+    modalMemo.value = "";
+  }
+
   modal.classList.remove("hidden");
 }
 
@@ -114,48 +162,82 @@ function closeModal() {
   modal.classList.add("hidden");
 }
 
-function saveNotes() {
-  if (!currentTask) return;
-  data[currentTask.ti].tasks[currentTask.ki].notes = taskNotes.value;
+document.getElementById("addTaskBtn").onclick = () => openTaskModal();
+
+document.getElementById("closeModalBtn").onclick = closeModal;
+
+document.getElementById("saveTaskBtn").onclick = () => {
+  if (currentTask) {
+    currentTask.subject = modalSubject.value;
+    currentTask.difficulty = modalDifficulty.value;
+    currentTask.type = modalType.value;
+    currentTask.memo = modalMemo.value;
+  } else {
+    const title = prompt("タスク名を入力してください");
+    if (!title) return;
+    state.tasks.push({
+      id: generateId(),
+      title,
+      subject: modalSubject.value,
+      difficulty: modalDifficulty.value,
+      type: modalType.value,
+      memo: modalMemo.value,
+      done: false,
+      retry: false
+    });
+  }
   save();
   closeModal();
-}
-
-function addTrader() {
-  const input = document.getElementById("newTraderName");
-  if (!input.value.trim()) return;
-  data.push({ name: input.value.trim(), tasks: [] });
-  input.value = "";
   render();
-}
+};
 
-function openAddTaskModal(traderIndex) {
-  currentTraderIndex = traderIndex;
-  addTaskTitle.textContent = `${data[traderIndex].name} にタスクを追加`;
-  newTaskName.value = "";
-  newTaskDifficulty.value = "normal";
-  addTaskModal.classList.remove("hidden");
-}
+/* ---------- フィルター項目追加 ---------- */
 
-function closeAddTask() {
-  addTaskModal.classList.add("hidden");
-}
-
-function confirmAddTask() {
-  const name = newTaskName.value.trim();
+document.getElementById("addDifficultyBtn").onclick = () => {
+  const name = prompt("追加する難易度名を入力");
   if (!name) return;
-  data[currentTraderIndex].tasks.push({
-    name,
-    done: false,
-    review: false,
-    difficulty: newTaskDifficulty.value,
-    notes: ""
-  });
-  closeAddTask();
+  state.difficulties.push(name);
+  save();
   render();
-}
+};
 
-document.getElementById("filter-review").addEventListener("change", render);
-document.getElementById("filter-difficulty").addEventListener("change", render);
+document.getElementById("addTypeBtn").onclick = () => {
+  const name = prompt("追加する問題形式を入力");
+  if (!name) return;
+  state.types.push(name);
+  save();
+  render();
+};
 
+/* ---------- 統計ページ ---------- */
+
+const statsPage = document.getElementById("statsPage");
+const statsContent = document.getElementById("statsContent");
+
+document.getElementById("statsBtn").onclick = () => {
+  statsContent.innerHTML = "";
+  state.subjects.forEach(subject => {
+    const tasks = state.tasks.filter(t => t.subject === subject);
+    const done = tasks.filter(t => t.done).length;
+    const percent = tasks.length ? Math.round((done / tasks.length) * 100) : 0;
+
+    const row = document.createElement("div");
+    row.className = "stat-row";
+    row.innerHTML = `
+      <div class="stat-label">${subject} ${done}/${tasks.length} (${percent}%)</div>
+      <div class="stat-bar">
+        <div class="stat-bar-inner" style="width:${percent}%"></div>
+      </div>
+    `;
+    statsContent.appendChild(row);
+  });
+  statsPage.classList.remove("hidden");
+};
+
+document.getElementById("closeStatsBtn").onclick = () => {
+  statsPage.classList.add("hidden");
+};
+
+/* ---------- 初期描画 ---------- */
 render();
+
