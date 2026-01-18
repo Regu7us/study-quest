@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Study Advisor</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<header class="topbar">
+  <div class="logo">STUDY<br><span>ADVISOR</span></div>
+  <div class="top-actions">
+    <button class="pill purple">⭐ プレミアム</button>
+    <button class="pill blue">ログイン</button>
+  </div>
+</header>
+
+<nav class="tabs">
+  <button class="tab">ダッシュボード</button>
+  <button class="tab active">タスク</button>
+  <button class="tab">統計</button>
+  <button class="tab">設定</button>
+</nav>
+
+<section class="filters">
+  <div class="filter-row">
+    <label>🔁 復習</label>
+    <input type="checkbox" id="filter-review" />
+    <label>🎯 難易度</label>
+    <select id="filter-difficulty">
+      <option value="all">Any</option>
+      <option value="easy">Easy</option>
+      <option value="normal">Normal</option>
+      <option value="hard">Hard</option>
+    </select>
+  </div>
+
+  <div class="add-row">
+    <input id="newTraderName" placeholder="＋ 教科を追加（例：数学）" />
+    <button onclick="addTrader()">追加</button>
+  </div>
+</section>
+
+<main id="traderList"></main>
+
+<!-- タスク追加モーダル -->
+<div id="addTaskModal" class="modal hidden">
+  <div class="modal-content">
+    <h2 id="addTaskTitle"></h2>
+    <input id="newTaskName" placeholder="タスク名（例：二次関数 基本10問）" />
+    <select id="newTaskDifficulty">
+      <option value="easy">Easy</option>
+      <option value="normal">Normal</option>
+      <option value="hard">Hard</option>
+    </select>
+    <div class="modal-actions">
+      <button onclick="confirmAddTask()">追加</button>
+      <button onclick="closeAddTask()">キャンセル</button>
+    </div>
+  </div>
+</div>
+
+<!-- メモモーダル -->
+<div id="taskModal" class="modal hidden">
+  <div class="modal-content">
+    <h2 id="modalTitle"></h2>
+    <textarea id="taskNotes" placeholder="感想・注意点・反省などを書く..."></textarea>
+    <div class="modal-actions">
+      <button onclick="saveNotes()">保存</button>
+      <button onclick="closeModal()">閉じる</button>
+    </div>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
+
