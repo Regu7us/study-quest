@@ -2,77 +2,1088 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8" />
-  <title>Study Quest</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="stylesheet" href="style.css" />
+  <title>Study Quest</title>
+
+  <!-- PWA -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0bd9ff">
+
+  <style>
+    :root {
+      --bg: #050b14;
+      --panel: #0b1626;
+      --accent: #0bd9ff;
+      --accent2: #9a5cff;
+      --text: #d6f6ff;
+      --done: #4cff88;
+      --retry: #ffb347;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: "Segoe UI", system-ui, sans-serif;
+      background: radial-gradient(circle at top, #0b1626, #03060c);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ===== Top Bar ===== */
+    header {
+      background: linear-gradient(90deg, #071226, #0b1f3a);
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid #0bd9ff33;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 1px;
+      color: var(--accent);
+    }
+
+    .top-actions {
+      display: flex;
+      gap: 10px;
+    }
+
+    .btn {
+      background: transparent;
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      padding: 6px 12px;
+      border-radius: 999px;
+      cursor: pointer;
+      font-size: 12px;
+      transition: 0.2s;
+    }
+
+    .btn:hover {
+      background: var(--accent);
+      color: #000;
+    }
+
+    /* ===== Filter Bar ===== */
+    .filters {
+      padding: 12px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      background: linear-gradient(180deg, #060d19, #03060c);
+      border-bottom: 1px solid #0bd9ff22;
+    }
+
+    .filter-group {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: #081528;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid #0bd9ff33;
+    }
+
+    .filter-group span {
+      font-size: 12px;
+      opacity: 0.7;
+    }
+
+    .chip {
+      padding: 4px 10px;
+      border-radius: 999px;
+      border: 1px solid #0bd9ff55;
+      background: transparent;
+      color: var(--accent);
+      font-size: 11px;
+      cursor: pointer;
+    }
+
+    .chip.active {
+      background: var(--accent);
+      color: #000;
+    }
+
+    /* ===== Layout ===== */
+    main {
+      padding: 14px;
+      max-width: 900px;
+      margin: auto;
+    }
+
+    /* ===== Subject (Trader-like) ===== */
+    .subject {
+      background: linear-gradient(180deg, #071226, #040915);
+      border: 1px solid #0bd9ff33;
+      border-radius: 12px;
+      margin-bottom: 14px;
+      overflow: hidden;
+      box-shadow: 0 0 20px #0bd9ff11;
+    }
+
+    .subject-header {
+      padding: 12px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      background: linear-gradient(90deg, #071226, #0b1f3a);
+      border-bottom: 1px solid #0bd9ff33;
+    }
+
+    .subject-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 15px;
+      color: var(--accent);
+      letter-spacing: 1px;
+    }
+
+    .subject-title .arrow {
+      transition: 0.2s;
+    }
+
+    .subject.collapsed .subject-title .arrow {
+      transform: rotate(-90deg);
+    }
+
+    .subject-progress {
+      font-size: 12px;
+      opacity: 0.7;
+    }
+
+    .tasks {
+      padding: 8px 10px 10px;
+      display: none;
+    }
+
+    .subject:not(.collapsed) .tasks {
+      display: block;
+    }
+
+    /* ===== Task Row ===== */
+    .task {
+      display: grid;
+      grid-template-columns: 32px 1fr 32px 32px;
+      gap: 6px;
+      align-items: center;
+      padding: 8px 6px;
+      border-bottom: 1px solid #0bd9ff11;
+      transition: 0.15s;
+      cursor: pointer;
+    }
+
+    .task:last-child {
+      border-bottom: none;
+    }
+
+    .task:hover {
+      background: #0b1f3a55;
+    }
+
+    .task.done .task-title {
+      text-decoration: line-through;
+      color: var(--done);
+      opacity: 0.8;
+    }
+
+    .task.retry .task-title {
+      color: var(--retry);
+    }
+
+    .task-checkbox,
+    .task-retry {
+      width: 18px;
+      height: 18px;
+      border-radius: 4px;
+      border: 2px solid #0bd9ff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 12px;
+      user-select: none;
+    }
+
+    .task-checkbox.checked {
+      background: var(--done);
+      border-color: var(--done);
+      color: #000;
+    }
+
+    .task-retry.active {
+      background: var(--retry);
+      border-color: var(--retry);
+      color: #000;
+    }
+
+    .task-title {
+      font-size: 14px;
+      line-height: 1.4;
+    }
+
+    .task-stats {
+      font-size: 16px;
+      opacity: 0.7;
+      cursor: pointer;
+      text-align: center;
+    }
+
+    /* ===== Modal ===== */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: #000a;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+
+    .modal-backdrop.active {
+      display: flex;
+    }
+
+    .modal {
+      background: linear-gradient(180deg, #071226, #040915);
+      border: 1px solid #0bd9ff55;
+      border-radius: 14px;
+      width: 95%;
+      max-width: 520px;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 0 40px #0bd9ff22;
+      padding: 14px 16px 16px;
+    }
+
+    .modal h2 {
+      margin: 0 0 10px;
+      font-size: 18px;
+      color: var(--accent);
+      letter-spacing: 1px;
+    }
+
+    .modal-section {
+      margin-bottom: 14px;
+    }
+
+    .modal-section label {
+      display: block;
+      font-size: 12px;
+      opacity: 0.7;
+      margin-bottom: 4px;
+    }
+
+    .modal input[type="text"],
+    .modal textarea,
+    .modal select {
+      width: 100%;
+      background: #03060c;
+      border: 1px solid #0bd9ff44;
+      color: var(--text);
+      border-radius: 8px;
+      padding: 8px 10px;
+      font-size: 14px;
+    }
+
+    .modal textarea {
+      min-height: 120px;
+      resize: vertical;
+    }
+
+    .tag-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .tag {
+      padding: 6px 12px;
+      border-radius: 999px;
+      border: 1px solid #0bd9ff55;
+      background: transparent;
+      color: var(--accent);
+      font-size: 12px;
+      cursor: pointer;
+    }
+
+    .tag.active {
+      background: var(--accent);
+      color: #000;
+    }
+
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    /* ===== Add Task Button ===== */
+    .floating-add {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: #000;
+      font-size: 28px;
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 0 20px #0bd9ff88;
+      z-index: 200;
+    }
+
+    /* ===== Stats Page ===== */
+    .stats-page {
+      display: none;
+      padding: 16px;
+      max-width: 800px;
+      margin: auto;
+    }
+
+    .stats-page.active {
+      display: block;
+    }
+
+    .stats-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+
+    .progress-card {
+      background: linear-gradient(180deg, #071226, #040915);
+      border: 1px solid #0bd9ff33;
+      border-radius: 12px;
+      padding: 12px;
+      margin-bottom: 12px;
+    }
+
+    .progress-title {
+      font-size: 14px;
+      margin-bottom: 6px;
+      color: var(--accent);
+    }
+
+    .progress-bar-bg {
+      background: #02050a;
+      border-radius: 999px;
+      height: 16px;
+      overflow: hidden;
+      border: 1px solid #0bd9ff44;
+    }
+
+    .progress-bar {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      width: 0%;
+      transition: 0.3s;
+    }
+
+    .progress-percent {
+      font-size: 12px;
+      margin-top: 4px;
+      opacity: 0.7;
+    }
+
+    /* ===== Small Screens ===== */
+    @media (max-width: 480px) {
+      .task-title {
+        font-size: 13px;
+      }
+    }
+  </style>
 </head>
 <body>
+
+  <!-- ===== Header ===== -->
   <header>
     <h1>STUDY QUEST</h1>
-    <div class="top-buttons">
-      <button id="addTaskBtn">＋ タスク追加</button>
-      <button id="statsBtn">📊 統計</button>
+    <div class="top-actions">
+      <button class="btn" id="statsBtn">📊 統計</button>
+      <button class="btn" id="settingsBtn">⚙️ 設定</button>
     </div>
   </header>
 
-  <section class="filters">
-    <div>
-      <span>難易度</span>
-      <div id="difficultyFilters" class="filter-group"></div>
-      <button id="addDifficultyBtn">＋</button>
-    </div>
-    <div>
-      <span>問題形式</span>
-      <div id="typeFilters" class="filter-group"></div>
-      <button id="addTypeBtn">＋</button>
-    </div>
-  </section>
+  <!-- ===== Filters ===== -->
+  <div class="filters" id="filterBar">
+    <!-- 動的生成 -->
+  </div>
 
+  <!-- ===== Main App ===== -->
   <main id="app"></main>
 
-  <!-- モーダル -->
-  <div id="taskModal" class="modal hidden">
-    <div class="modal-content">
-      <h2 id="modalTitle"></h2>
+  <!-- ===== Stats Page ===== -->
+  <div class="stats-page" id="statsPage">
+    <div class="stats-header">
+      <h2>進捗統計</h2>
+      <button class="btn" id="backToMain">← 戻る</button>
+    </div>
+    <div id="statsContent"></div>
+  </div>
 
-      <div class="modal-row">
+  <!-- ===== Floating Add ===== -->
+  <button class="floating-add" id="addTaskBtn">＋</button>
+
+  <!-- ===== Task Modal ===== -->
+  <div class="modal-backdrop" id="taskModal">
+    <div class="modal">
+      <h2 id="modalTitle">タスク</h2>
+
+      <div class="modal-section">
+        <label>タスク名</label>
+        <input type="text" id="taskNameInput" placeholder="例：二次関数 最大値最小値 問題10" />
+      </div>
+
+      <div class="modal-section">
         <label>教科</label>
-        <select id="modalSubject"></select>
+        <select id="taskSubjectSelect"></select>
       </div>
 
-      <div class="modal-row">
+      <div class="modal-section">
         <label>難易度</label>
-        <select id="modalDifficulty"></select>
+        <div class="tag-row" id="difficultyTags"></div>
+        <button class="btn" id="addDifficultyBtn" style="margin-top:6px;">＋ 難易度を追加</button>
       </div>
 
-      <div class="modal-row">
+      <div class="modal-section">
         <label>問題形式</label>
-        <select id="modalType"></select>
+        <div class="tag-row" id="typeTags"></div>
+        <button class="btn" id="addTypeBtn" style="margin-top:6px;">＋ 問題形式を追加</button>
       </div>
 
-      <div class="modal-row">
-        <label>備考</label>
-        <textarea id="modalMemo" rows="6"></textarea>
+      <div class="modal-section">
+        <label>備考 / メモ</label>
+        <textarea id="taskNotesInput" placeholder="ここに解法メモ、注意点、反省点などを書けます"></textarea>
       </div>
 
       <div class="modal-actions">
-        <button id="saveTaskBtn">保存</button>
-        <button id="closeModalBtn">閉じる</button>
+        <button class="btn" id="deleteTaskBtn" style="border-color:#ff4c4c;color:#ff4c4c;">削除</button>
+        <button class="btn" id="saveTaskBtn">保存</button>
+        <button class="btn" id="closeTaskBtn">閉じる</button>
       </div>
     </div>
   </div>
 
-  <!-- 統計画面 -->
-  <div id="statsPage" class="modal hidden">
-    <div class="modal-content stats">
-      <h2>📊 教科別進捗</h2>
-      <div id="statsContent"></div>
-      <button id="closeStatsBtn">閉じる</button>
+  <!-- ===== Settings Modal ===== -->
+  <div class="modal-backdrop" id="settingsModal">
+    <div class="modal">
+      <h2>設定</h2>
+
+      <div class="modal-section">
+        <label>難易度一覧</label>
+        <div id="settingsDifficultyList"></div>
+        <input type="text" id="newDifficultyInput" placeholder="新しい難易度名" />
+        <button class="btn" id="saveNewDifficultyBtn" style="margin-top:6px;">追加</button>
+      </div>
+
+      <div class="modal-section">
+        <label>問題形式一覧</label>
+        <div id="settingsTypeList"></div>
+        <input type="text" id="newTypeInput" placeholder="新しい問題形式名" />
+        <button class="btn" id="saveNewTypeBtn" style="margin-top:6px;">追加</button>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn" id="closeSettingsBtn">閉じる</button>
+      </div>
     </div>
   </div>
 
-  <script src="app.js"></script>
+<script>
+/* ======================================================
+   ======= STUDY QUEST - TARKOV STYLE FULL SYSTEM =======
+   ====================================================== */
+
+/* ---------- Default Data ---------- */
+const DEFAULT_SUBJECTS = [
+  "数学Ⅰ", "数学A", "数学Ⅱ", "数学B", "数学C", "数学Ⅲ",
+  "物理基礎", "物理",
+  "化学基礎", "化学",
+  "地理", "英語", "古文", "漢文", "現代文・小説"
+];
+
+const DEFAULT_DIFFICULTIES = ["Normal", "Hard", "Very Hard"];
+const DEFAULT_TYPES = ["練習問題", "リードC", "リードD", "教科書内容"];
+
+/* ---------- Storage Helpers ---------- */
+function load(key, fallback) {
+  try {
+    const data = JSON.parse(localStorage.getItem(key));
+    return data ?? fallback;
+  } catch {
+    return fallback;
+  }
+}
+function save(key, value) {
+  localStorage.setItem(key, JSON.stringify(value));
+}
+
+/* ---------- App State ---------- */
+let subjects = load("subjects", DEFAULT_SUBJECTS);
+let difficulties = load("difficulties", DEFAULT_DIFFICULTIES);
+let types = load("types", DEFAULT_TYPES);
+let tasks = load("tasks", []);
+
+/* filters */
+let activeDifficultyFilters = new Set();
+let activeTypeFilters = new Set();
+let showIncompleteOnly = false;
+let showRetryOnly = false;
+
+/* UI state */
+let editingTaskId = null;
+
+/* ---------- Init ---------- */
+renderFilters();
+renderApp();
+
+/* ======================================================
+   =================== RENDERING ========================
+   ====================================================== */
+
+function renderFilters() {
+  const bar = document.getElementById("filterBar");
+  bar.innerHTML = "";
+
+  // Incomplete toggle
+  const incompleteGroup = document.createElement("div");
+  incompleteGroup.className = "filter-group";
+  incompleteGroup.innerHTML = `
+    <span>表示</span>
+    <button class="chip ${showIncompleteOnly ? "active" : ""}" id="filterIncomplete">未完了のみ</button>
+    <button class="chip ${showRetryOnly ? "active" : ""}" id="filterRetry">再挑戦のみ</button>
+  `;
+  bar.appendChild(incompleteGroup);
+
+  document.getElementById("filterIncomplete").onclick = () => {
+    showIncompleteOnly = !showIncompleteOnly;
+    renderFilters();
+    renderApp();
+  };
+  document.getElementById("filterRetry").onclick = () => {
+    showRetryOnly = !showRetryOnly;
+    renderFilters();
+    renderApp();
+  };
+
+  // Difficulty filters
+  const diffGroup = document.createElement("div");
+  diffGroup.className = "filter-group";
+  diffGroup.innerHTML = `<span>難易度</span>`;
+  difficulties.forEach(d => {
+    const btn = document.createElement("button");
+    btn.className = "chip" + (activeDifficultyFilters.has(d) ? " active" : "");
+    btn.textContent = d;
+    btn.onclick = () => {
+      if (activeDifficultyFilters.has(d)) activeDifficultyFilters.delete(d);
+      else activeDifficultyFilters.add(d);
+      renderFilters();
+      renderApp();
+    };
+    diffGroup.appendChild(btn);
+  });
+  bar.appendChild(diffGroup);
+
+  // Type filters
+  const typeGroup = document.createElement("div");
+  typeGroup.className = "filter-group";
+  typeGroup.innerHTML = `<span>形式</span>`;
+  types.forEach(t => {
+    const btn = document.createElement("button");
+    btn.className = "chip" + (activeTypeFilters.has(t) ? " active" : "");
+    btn.textContent = t;
+    btn.onclick = () => {
+      if (activeTypeFilters.has(t)) activeTypeFilters.delete(t);
+      else activeTypeFilters.add(t);
+      renderFilters();
+      renderApp();
+    };
+    typeGroup.appendChild(btn);
+  });
+  bar.appendChild(typeGroup);
+}
+
+function renderApp() {
+  const app = document.getElementById("app");
+  app.style.display = "block";
+  document.getElementById("statsPage").classList.remove("active");
+
+  app.innerHTML = "";
+
+  subjects.forEach(subject => {
+    const subjectTasks = tasks.filter(t => t.subject === subject);
+    const filteredTasks = subjectTasks.filter(taskPassesFilters);
+
+    const doneCount = subjectTasks.filter(t => t.done).length;
+    const totalCount = subjectTasks.length;
+
+    const subjectDiv = document.createElement("div");
+    subjectDiv.className = "subject";
+
+    const header = document.createElement("div");
+    header.className = "subject-header";
+    header.innerHTML = `
+      <div class="subject-title">
+        <span class="arrow">▶</span>
+        <span>${subject}</span>
+      </div>
+      <div class="subject-progress">${doneCount}/${totalCount}</div>
+    `;
+
+    header.onclick = () => {
+      subjectDiv.classList.toggle("collapsed");
+    };
+
+    const tasksDiv = document.createElement("div");
+    tasksDiv.className = "tasks";
+
+    filteredTasks.forEach(task => {
+      const taskDiv = document.createElement("div");
+      taskDiv.className = "task";
+      if (task.done) taskDiv.classList.add("done");
+      if (task.retry) taskDiv.classList.add("retry");
+
+      // Checkbox
+      const checkbox = document.createElement("div");
+      checkbox.className = "task-checkbox" + (task.done ? " checked" : "");
+      checkbox.textContent = task.done ? "✓" : "";
+      checkbox.onclick = e => {
+        e.stopPropagation();
+        task.done = !task.done;
+        if (task.done) task.retry = false;
+        save("tasks", tasks);
+        renderApp();
+      };
+
+      // Title
+      const title = document.createElement("div");
+      title.className = "task-title";
+      title.textContent = task.name;
+
+      // Retry
+      const retry = document.createElement("div");
+      retry.className = "task-retry" + (task.retry ? " active" : "");
+      retry.textContent = "↻";
+      retry.onclick = e => {
+        e.stopPropagation();
+        task.retry = !task.retry;
+        if (task.retry) task.done = false;
+        save("tasks", tasks);
+        renderApp();
+      };
+
+      // Stats icon
+      const stats = document.createElement("div");
+      stats.className = "task-stats";
+      stats.textContent = "📊";
+      stats.onclick = e => {
+        e.stopPropagation();
+        showStatsPage();
+      };
+
+      taskDiv.appendChild(checkbox);
+      taskDiv.appendChild(title);
+      taskDiv.appendChild(retry);
+      taskDiv.appendChild(stats);
+
+      taskDiv.onclick = () => openTaskModal(task);
+
+      tasksDiv.appendChild(taskDiv);
+    });
+
+    subjectDiv.appendChild(header);
+    subjectDiv.appendChild(tasksDiv);
+    app.appendChild(subjectDiv);
+  });
+}
+
+function taskPassesFilters(task) {
+  if (showIncompleteOnly && task.done) return false;
+  if (showRetryOnly && !task.retry) return false;
+
+  if (activeDifficultyFilters.size > 0 && !activeDifficultyFilters.has(task.difficulty)) {
+    return false;
+  }
+  if (activeTypeFilters.size > 0 && !activeTypeFilters.has(task.type)) {
+    return false;
+  }
+  return true;
+}
+
+/* ======================================================
+   =================== TASK MODAL ========================
+   ====================================================== */
+
+const taskModal = document.getElementById("taskModal");
+const taskNameInput = document.getElementById("taskNameInput");
+const taskSubjectSelect = document.getElementById("taskSubjectSelect");
+const difficultyTagsDiv = document.getElementById("difficultyTags");
+const typeTagsDiv = document.getElementById("typeTags");
+const taskNotesInput = document.getElementById("taskNotesInput");
+const deleteTaskBtn = document.getElementById("deleteTaskBtn");
+const saveTaskBtn = document.getElementById("saveTaskBtn");
+const closeTaskBtn = document.getElementById("closeTaskBtn");
+const modalTitle = document.getElementById("modalTitle");
+
+document.getElementById("addTaskBtn").onclick = () => openTaskModal(null);
+closeTaskBtn.onclick = () => closeTaskModal();
+
+function openTaskModal(task) {
+  taskModal.classList.add("active");
+
+  taskSubjectSelect.innerHTML = "";
+  subjects.forEach(sub => {
+    const opt = document.createElement("option");
+    opt.value = sub;
+    opt.textContent = sub;
+    taskSubjectSelect.appendChild(opt);
+  });
+
+  renderDifficultyTags();
+  renderTypeTags();
+
+  if (task) {
+    editingTaskId = task.id;
+    modalTitle.textContent = "タスク編集";
+    taskNameInput.value = task.name;
+    taskSubjectSelect.value = task.subject;
+    taskNotesInput.value = task.notes || "";
+    selectTag(difficultyTagsDiv, task.difficulty);
+    selectTag(typeTagsDiv, task.type);
+    deleteTaskBtn.style.display = "inline-block";
+  } else {
+    editingTaskId = null;
+    modalTitle.textContent = "新規タスク";
+    taskNameInput.value = "";
+    taskSubjectSelect.value = subjects[0];
+    taskNotesInput.value = "";
+    selectTag(difficultyTagsDiv, difficulties[0]);
+    selectTag(typeTagsDiv, types[0]);
+    deleteTaskBtn.style.display = "none";
+  }
+}
+
+function closeTaskModal() {
+  taskModal.classList.remove("active");
+}
+
+function renderDifficultyTags() {
+  difficultyTagsDiv.innerHTML = "";
+  difficulties.forEach(d => {
+    const tag = document.createElement("button");
+    tag.className = "tag";
+    tag.textContent = d;
+    tag.onclick = () => selectTag(difficultyTagsDiv, d);
+    difficultyTagsDiv.appendChild(tag);
+  });
+}
+
+function renderTypeTags() {
+  typeTagsDiv.innerHTML = "";
+  types.forEach(t => {
+    const tag = document.createElement("button");
+    tag.className = "tag";
+    tag.textContent = t;
+    tag.onclick = () => selectTag(typeTagsDiv, t);
+    typeTagsDiv.appendChild(tag);
+  });
+}
+
+function selectTag(container, value) {
+  [...container.children].forEach(tag => {
+    tag.classList.toggle("active", tag.textContent === value);
+  });
+}
+
+function getSelectedTag(container) {
+  const active = [...container.children].find(tag => tag.classList.contains("active"));
+  return active ? active.textContent : null;
+}
+
+saveTaskBtn.onclick = () => {
+  const name = taskNameInput.value.trim();
+  if (!name) {
+    alert("タスク名を入力してください");
+    return;
+  }
+
+  const subject = taskSubjectSelect.value;
+  const difficulty = getSelectedTag(difficultyTagsDiv);
+  const type = getSelectedTag(typeTagsDiv);
+  const notes = taskNotesInput.value;
+
+  if (editingTaskId) {
+    const task = tasks.find(t => t.id === editingTaskId);
+    if (!task) return;
+    task.name = name;
+    task.subject = subject;
+    task.difficulty = difficulty;
+    task.type = type;
+    task.notes = notes;
+  } else {
+    tasks.push({
+      id: crypto.randomUUID(),
+      name,
+      subject,
+      difficulty,
+      type,
+      notes,
+      done: false,
+      retry: false
+    });
+  }
+
+  save("tasks", tasks);
+  closeTaskModal();
+  renderApp();
+};
+
+deleteTaskBtn.onclick = () => {
+  if (!editingTaskId) return;
+  if (!confirm("このタスクを削除しますか？")) return;
+  tasks = tasks.filter(t => t.id !== editingTaskId);
+  save("tasks", tasks);
+  closeTaskModal();
+  renderApp();
+};
+
+/* ======================================================
+   =================== SETTINGS MODAL ====================
+   ====================================================== */
+
+const settingsModal = document.getElementById("settingsModal");
+const settingsBtn = document.getElementById("settingsBtn");
+const closeSettingsBtn = document.getElementById("closeSettingsBtn");
+const settingsDifficultyList = document.getElementById("settingsDifficultyList");
+const settingsTypeList = document.getElementById("settingsTypeList");
+const newDifficultyInput = document.getElementById("newDifficultyInput");
+const newTypeInput = document.getElementById("newTypeInput");
+const saveNewDifficultyBtn = document.getElementById("saveNewDifficultyBtn");
+const saveNewTypeBtn = document.getElementById("saveNewTypeBtn");
+
+settingsBtn.onclick = () => openSettingsModal();
+closeSettingsBtn.onclick = () => closeSettingsModal();
+
+function openSettingsModal() {
+  settingsModal.classList.add("active");
+  renderSettingsLists();
+}
+
+function closeSettingsModal() {
+  settingsModal.classList.remove("active");
+}
+
+function renderSettingsLists() {
+  settingsDifficultyList.innerHTML = "";
+  difficulties.forEach((d, i) => {
+    const row = document.createElement("div");
+    row.style.display = "flex";
+    row.style.justifyContent = "space-between";
+    row.style.alignItems = "center";
+    row.style.marginBottom = "6px";
+    row.innerHTML = `
+      <span>${d}</span>
+      <button class="btn" style="border-color:#ff4c4c;color:#ff4c4c;">削除</button>
+    `;
+    row.querySelector("button").onclick = () => {
+      if (!confirm(`「${d}」を削除しますか？`)) return;
+      difficulties.splice(i, 1);
+      save("difficulties", difficulties);
+      renderSettingsLists();
+      renderFilters();
+    };
+    settingsDifficultyList.appendChild(row);
+  });
+
+  settingsTypeList.innerHTML = "";
+  types.forEach((t, i) => {
+    const row = document.createElement("div");
+    row.style.display = "flex";
+    row.style.justifyContent = "space-between";
+    row.style.alignItems = "center";
+    row.style.marginBottom = "6px";
+    row.innerHTML = `
+      <span>${t}</span>
+      <button class="btn" style="border-color:#ff4c4c;color:#ff4c4c;">削除</button>
+    `;
+    row.querySelector("button").onclick = () => {
+      if (!confirm(`「${t}」を削除しますか？`)) return;
+      types.splice(i, 1);
+      save("types", types);
+      renderSettingsLists();
+      renderFilters();
+    };
+    settingsTypeList.appendChild(row);
+  });
+}
+
+saveNewDifficultyBtn.onclick = () => {
+  const val = newDifficultyInput.value.trim();
+  if (!val) return;
+  if (difficulties.includes(val)) {
+    alert("すでに存在します");
+    return;
+  }
+  difficulties.push(val);
+  save("difficulties", difficulties);
+  newDifficultyInput.value = "";
+  renderSettingsLists();
+  renderFilters();
+};
+
+saveNewTypeBtn.onclick = () => {
+  const val = newTypeInput.value.trim();
+  if (!val) return;
+  if (types.includes(val)) {
+    alert("すでに存在します");
+    return;
+  }
+  types.push(val);
+  save("types", types);
+  newTypeInput.value = "";
+  renderSettingsLists();
+  renderFilters();
+};
+
+/* ======================================================
+   =================== STATS PAGE ========================
+   ====================================================== */
+
+const statsBtn = document.getElementById("statsBtn");
+const backToMain = document.getElementById("backToMain");
+const statsPage = document.getElementById("statsPage");
+const statsContent = document.getElementById("statsContent");
+
+statsBtn.onclick = () => showStatsPage();
+backToMain.onclick = () => {
+  statsPage.classList.remove("active");
+  document.getElementById("app").style.display = "block";
+};
+
+function showStatsPage() {
+  document.getElementById("app").style.display = "none";
+  statsPage.classList.add("active");
+  renderStats();
+}
+
+function renderStats() {
+  statsContent.innerHTML = "";
+
+  subjects.forEach(subject => {
+    const subjectTasks = tasks.filter(t => t.subject === subject);
+    const total = subjectTasks.length;
+    const done = subjectTasks.filter(t => t.done).length;
+    const percent = total === 0 ? 0 : Math.round((done / total) * 100);
+
+    const card = document.createElement("div");
+    card.className = "progress-card";
+
+    const title = document.createElement("div");
+    title.className = "progress-title";
+    title.textContent = subject;
+
+    const barBg = document.createElement("div");
+    barBg.className = "progress-bar-bg";
+
+    const bar = document.createElement("div");
+    bar.className = "progress-bar";
+    bar.style.width = percent + "%";
+
+    const pct = document.createElement("div");
+    pct.className = "progress-percent";
+    pct.textContent = `${done} / ${total} 完了 (${percent}%)`;
+
+    barBg.appendChild(bar);
+    card.appendChild(title);
+    card.appendChild(barBg);
+    card.appendChild(pct);
+
+    statsContent.appendChild(card);
+  });
+}
+
+/* ======================================================
+   =================== EXTRA BUTTONS =====================
+   ====================================================== */
+
+// Add difficulty from task modal
+document.getElementById("addDifficultyBtn").onclick = () => {
+  const val = prompt("新しい難易度名を入力してください");
+  if (!val) return;
+  if (difficulties.includes(val)) {
+    alert("すでに存在します");
+    return;
+  }
+  difficulties.push(val);
+  save("difficulties", difficulties);
+  renderDifficultyTags();
+  renderFilters();
+};
+
+// Add type from task modal
+document.getElementById("addTypeBtn").onclick = () => {
+  const val = prompt("新しい問題形式名を入力してください");
+  if (!val) return;
+  if (types.includes(val)) {
+    alert("すでに存在します");
+    return;
+  }
+  types.push(val);
+  save("types", types);
+  renderTypeTags();
+  renderFilters();
+};
+
+/* ======================================================
+   =================== FIRST RUN SEED ====================
+   ====================================================== */
+
+if (tasks.length === 0) {
+  tasks = [
+    {
+      id: crypto.randomUUID(),
+      name: "二次関数 最大値・最小値 問題10",
+      subject: "数学Ⅰ",
+      difficulty: "Normal",
+      type: "練習問題",
+      notes: "",
+      done: false,
+      retry: false
+    },
+    {
+      id: crypto.randomUUID(),
+      name: "等差数列 応用例題",
+      subject: "数学B",
+      difficulty: "Hard",
+      type: "教科書内容",
+      notes: "",
+      done: false,
+      retry: false
+    }
+  ];
+  save("tasks", tasks);
+}
+
+/* ======================================================
+   =================== SERVICE WORKER ====================
+   ====================================================== */
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("sw.js").catch(() => {});
+}
+</script>
+
 </body>
 </html>
+
 
 
